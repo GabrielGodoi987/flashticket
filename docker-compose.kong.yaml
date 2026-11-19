@@ -1,0 +1,72 @@
+x-kong-db-env: &kong-db-env
+  KONG_DATABASE: postgres
+  KONG_PG_HOST: kong_db
+  KONG_PG_USER: kong
+  KONG_PG_PASSWORD: kong
+  KONG_PG_DATABASE: kong
+
+services:
+  kong_db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: kong
+      POSTGRES_DB: kong
+    volumes:
+      - kong_db_data:/var/lib/postgresql/data
+    networks: [kong-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kong -d kong"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Roda uma vez: cria/atualiza o schema do Kong no banco e termina
+  kong_migrations:
+    image: kong:3.9.4
+    command: sh -c "kong migrations bootstrap && kong migrations up && kong migrations finish"
+    environment:
+      <<: *kong-db-env
+    networks: [kong-net]
+    depends_on:
+      kong_db:
+        condition: service_healthy
+    restart: on-failure
+
+  kong:
+    image: kong:3.9.4
+    environment:
+      <<: *kong-db-env
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_ADMIN_GUI_LISTEN: 0.0.0.0:8002
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+    ports:
+      - "8000:8000" # proxy: por onde as requisições entram
+      - "127.0.0.1:8001:8001" # Admin API: só acessível da sua máquina
+      - "127.0.0.1:8002:8002" # Kong Manager (UI)
+    networks: [kong-net, bus]
+    depends_on:
+      kong_migrations:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  whoami: # backend de exemplo para testar rotas
+    image: traefik/whoami
+    networks: [bus]
+
+volumes:
+  kong_db_data:
+
+networks:
+  kong-net:
+    driver: bridge
+  bus:
+    driver: bridge

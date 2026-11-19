@@ -1,0 +1,10 @@
+include:
+  - docker-compose.infra.yaml
+  - docker-compose.kong.yaml
+  - docker-compose.reservas.yaml
+  - docker-compose.payment.yaml
+  - docker-compose.iam.yaml
+
+networks:
+  bus:
+    driver: bridge

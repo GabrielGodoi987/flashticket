@@ -1,0 +1,24 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: bilheteria
+      RABBITMQ_DEFAULT_PASS: bilheteria
+    ports:
+      - "5672:5672" # AMQP
+      - "15672:15672" # painel de gerenciamento
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks: [bus]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  rabbitmq_data:
+
+networks:
+  bus:
+    driver: bridge

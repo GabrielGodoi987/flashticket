@@ -1,0 +1,56 @@
+services:
+  payment:
+    build:
+      context: ./payment
+      dockerfile: Dockerfile
+    environment:
+      DB_URL: jdbc:postgresql://payment_db:5432/payment
+      DB_USER: payment
+      DB_PASSWORD: payment
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: bilheteria
+      RABBITMQ_PASSWORD: bilheteria
+    ports:
+      - "8090:8080"
+    networks: [payment-net, bus]
+    depends_on:
+      payment_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  payment_db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: payment
+      POSTGRES_PASSWORD: payment
+      POSTGRES_DB: payment
+    ports:
+      - "5433:5432"
+    volumes:
+      - payment_db_data:/var/lib/postgresql/data
+    networks: [payment-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payment -d payment"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  payment_adminer:
+    image: adminer:4
+    ports:
+      - "8081:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: payment_db
+    networks: [payment-net]
+    depends_on:
+      - payment_db
+
+volumes:
+  payment_db_data:
+
+networks:
+  payment-net:
+    driver: bridge
+  bus:
+    driver: bridge
