@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: development
     environment:
       DB_URL: jdbc:postgresql://payment_db:5432/payment
       DB_USER: payment
@@ -12,7 +13,11 @@ services:
       RABBITMQ_PASSWORD: bilheteria
     ports:
       - "8090:8080"
+    volumes:
+      - .:/app
+      - payment_maven_cache:/root/.m2
     networks: [payment-net, bus]
+    command: ["./docker-entrypoint-dev.sh"]
     depends_on:
       payment_db:
         condition: service_healthy
@@ -66,6 +71,7 @@ services:
 volumes:
   payment_db_data:
   rabbitmq_data:
+  payment_maven_cache:
 
 networks:
   payment-net:

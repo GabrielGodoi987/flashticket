@@ -2,9 +2,13 @@ FROM eclipse-temurin:25-jdk-alpine AS builder
 WORKDIR /app
 COPY .mvn .mvn
 COPY mvnw pom.xml ./
-RUN ./mvnw -q dependency:go-offline
+RUN ./mvnw -q -Pdevelopment dependency:go-offline
 COPY src src
 RUN ./mvnw -q package -DskipTests
+
+FROM builder AS development
+RUN apk add --no-cache inotify-tools
+CMD ["./docker-entrypoint-dev.sh"]
 
 FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app

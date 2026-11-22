@@ -3,10 +3,17 @@ services:
     build:
       context: ./reservations
       dockerfile: Dockerfile
+      target: development
     ports:
       - "3002:3000"
     networks: [reservations-net, bus]
+    volumes:
+      - ./reservations:/app
+      - /app/node_modules
+    command: sh -c "npm run migration:run && npm run start:dev"
     environment:
+      TSC_WATCHFILE: DynamicPriorityPolling
+      TSC_WATCHDIRECTORY: DynamicPriorityPolling
       DB_HOST: reservations_db
       DB_PORT: 5432
       DB_USER: reservations

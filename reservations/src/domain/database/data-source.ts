@@ -15,7 +15,7 @@ export function dataSourceOptions(): DataSourceOptions {
     database: process.env.DB_NAME ?? 'reservations',
     entities: [join(__dirname, '..', '**', '*.entity.{ts,js}')],
     migrations: [
-      join(__dirname, '..', 'domain', 'migrations', 'v1', '*.{ts,js}'),
+      join(__dirname, '..', 'migrations', 'v1', '*.{ts,js}'),
     ],
     migrationsTableName: 'migrations',
     synchronize: false,

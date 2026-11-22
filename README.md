@@ -11,3 +11,16 @@ Aqui no projeto, eu vou escrever um mini blog, dentro da pastinha: '/learn'. Den
 ## Arquitetura do projeto
 
 ![alt text](image.png)
+
+## Desenvolvimento com Docker
+
+Os serviços de aplicação (`reservations`, `iam` e `payment`) montam suas pastas
+locais nos containers e recarregam ao detectar alterações. Para recriar os
+containers com essa configuração, execute na raiz:
+
+```bash
+docker compose up --build
+```
+
+PostgreSQL, Redis, RabbitMQ e Kong continuam usando volumes próprios para seus
+dados/configuração; o código-fonte da aplicação não é montado nesses containers.

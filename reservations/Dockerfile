@@ -5,6 +5,12 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
+FROM builder AS development
+ENV NODE_ENV=development
+RUN chown -R node:node /app/dist
+USER node
+CMD ["npm", "run", "start:dev"]
+
 FROM node:24-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production

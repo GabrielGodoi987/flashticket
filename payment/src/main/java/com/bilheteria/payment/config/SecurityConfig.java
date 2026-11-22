@@ -23,6 +23,7 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 // Fechado por padrão: só o health check é público
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/health").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
