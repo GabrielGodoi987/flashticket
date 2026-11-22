@@ -31,12 +31,12 @@ compose.override.y*ml
 /node_modules/
 /vendor/
 /notifications/node_modules/
+/web-frontend/node_modules/
 /notifications/bin/
 /notifications/tmp/
 /notifications/*.exe
 /notifications/*.test
 /notifications/*.out
-/docs/
 /dist/
 /build/
 /target/
