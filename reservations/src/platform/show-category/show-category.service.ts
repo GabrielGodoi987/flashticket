@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
-import { ShowCategory } from '../../catalog/entities/show-category.entity';
+import { ShowCategory } from '../../domain/entities/show-category.entity';
 import { CreateShowCategoryDto } from './dto/create-show-category.dto';
 import { UpdateShowCategoryDto } from './dto/update-show-category.dto';
 

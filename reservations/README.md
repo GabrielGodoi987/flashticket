@@ -67,7 +67,7 @@ Garantidas no domínio:
 - Uma reserva tem de 1 a `maxTicketsPerReservation` itens, e tudo nela pertence ao mesmo show.
 - O assento do item precisa estar no setor do `TicketType` do item.
 - A idade do titular na data `startAt` precisa ser `>= category.minAge`.
-- O preço do item é calculado por `calculateItemPrice` (a meia arredonda para baixo).
+- O preço do item é calculado por `ItemPriceCalculator` (a meia arredonda para baixo).
 - `totalInCents = Σ itens − discountInCents`.
 
 ### Hold atômico (tudo ou nada, em uma transação)
@@ -102,3 +102,9 @@ yarn migration:generate NomeDaMigration   # gera a partir do diff entities × ba
 yarn migration:run
 yarn migration:revert
 ```
+
+## Testes
+
+Os testes unitários ficam em `test/unit/`, organizados para espelhar os módulos
+de `src/`. Execute-os com `npm test`; `npm run test:cov` gera a cobertura do
+código em `src/`.

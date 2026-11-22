@@ -10,7 +10,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ShowCategory } from '../../catalog/entities/show-category.entity';
+import { ShowCategory } from '../../domain/entities/show-category.entity';
 import { CreateShowCategoryDto } from './dto/create-show-category.dto';
 import { UpdateShowCategoryDto } from './dto/update-show-category.dto';
 import { ShowCategoryService } from './show-category.service';
