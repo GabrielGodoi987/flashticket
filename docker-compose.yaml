@@ -4,6 +4,7 @@ include:
   - docker-compose.reservations.yaml
   - docker-compose.payment.yaml
   - docker-compose.iam.yaml
+  - docker-compose.notifications.yaml
 
 networks:
   bus:

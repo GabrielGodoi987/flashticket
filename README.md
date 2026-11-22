@@ -14,13 +14,18 @@ Aqui no projeto, eu vou escrever um mini blog, dentro da pastinha: '/learn'. Den
 
 ## Desenvolvimento com Docker
 
-Os serviços de aplicação (`reservations`, `iam` e `payment`) montam suas pastas
-locais nos containers e recarregam ao detectar alterações. Para recriar os
-containers com essa configuração, execute na raiz:
+Os serviços `reservations`, `iam` e `payment` montam suas pastas locais nos
+containers e recarregam ao detectar alterações. `notifications` é compilado
+para uma imagem Go. Para iniciar tudo na raiz:
 
 ```bash
 docker compose up --build
 ```
 
-PostgreSQL, Redis, RabbitMQ e Kong continuam usando volumes próprios para seus
-dados/configuração; o código-fonte da aplicação não é montado nesses containers.
+PostgreSQL, Redis, MongoDB, RabbitMQ e Kong continuam usando volumes próprios
+para seus dados/configuração; o código-fonte da aplicação não é montado nesses
+containers.
+
+O serviço Go de notificações, MongoDB e contrato de eventos estão descritos em
+[notifications/README.md](./notifications/README.md). O roteiro local de
+aprendizado de Go fica em `docs/teach/golang-basics` e não é versionado.

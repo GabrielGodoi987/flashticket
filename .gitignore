@@ -29,6 +29,14 @@ compose.override.y*ml
 
 # Dependências e artefatos de build (caso sejam gerados na raiz)
 /node_modules/
+/vendor/
+/notifications/node_modules/
+/notifications/bin/
+/notifications/tmp/
+/notifications/*.exe
+/notifications/*.test
+/notifications/*.out
+/docs/
 /dist/
 /build/
 /target/

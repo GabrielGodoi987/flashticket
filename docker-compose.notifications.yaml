@@ -1,0 +1,66 @@
+services:
+  notifications:
+    build:
+      context: ./notifications
+      dockerfile: Dockerfile
+    environment:
+      HTTP_ADDR: :3000
+      MONGODB_URI: mongodb://notifications:notifications@notifications_db:27017/?authSource=admin
+      MONGODB_DATABASE: notifications
+      RABBITMQ_URL: amqp://bilheteria:bilheteria@rabbitmq:5672/
+      RABBITMQ_EXCHANGE: notifications.events
+      RABBITMQ_QUEUE: notifications.events
+      RABBITMQ_ROUTING_KEY: notification.#
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-FlashTicket <notifications@resend.dev>}
+      IAM_JWKS_URL: ${IAM_JWKS_URL:-}
+      IAM_ISSUER: ${IAM_ISSUER:-}
+      IAM_AUDIENCE: ${IAM_AUDIENCE:-}
+    ports:
+      - "3003:3000"
+    networks: [notifications-net, bus]
+    depends_on:
+      notifications_db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  notifications_db:
+    image: mongo:8
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: notifications
+      MONGO_INITDB_ROOT_PASSWORD: notifications
+      MONGO_INITDB_DATABASE: notifications
+    ports:
+      - "27017:27017"
+    volumes:
+      - notifications_mongo_data:/data/db
+    networks: [notifications-net]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "db.adminCommand('ping').ok",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  notifications_mongo_data:
+
+networks:
+  notifications-net:
+    driver: bridge
+  bus:
+    driver: bridge
