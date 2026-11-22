@@ -1,0 +1,16 @@
+{
+  "routes": [
+    { "path": "/", "title": "FlashTicket home" },
+    { "path": "/events", "title": "Browse events" },
+    { "path": "/events/:eventId", "title": "Event details" },
+    { "path": "/checkout/:eventId", "title": "Reservation checkout" },
+    { "path": "/tickets", "title": "My tickets" },
+    { "path": "/notifications", "title": "Notifications" },
+    { "path": "/sign-in", "title": "Sign in" },
+    { "path": "/sign-up", "title": "Create account" },
+    { "path": "/organizer", "title": "Organizer overview" },
+    { "path": "/organizer/events", "title": "Manage events" },
+    { "path": "/organizer/tickets", "title": "Ticket configuration" },
+    { "path": "/organizer/operations", "title": "Reservations and sales" }
+  ]
+}
