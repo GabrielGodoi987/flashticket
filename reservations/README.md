@@ -1,98 +1,104 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Reservas — modelo de domínio
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Serviço responsável por shows, assentos, reservas e emissão de ingressos.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Regras de negócio
 
-## Description
+- **Assento marcado**: todo show tem setores, e cada setor tem assentos (fileira + número).
+- **Uma compra, vários ingressos**: o comprador (ex.: um pai com a família de 5 pessoas) reserva vários assentos e paga uma vez só.
+  - A reserva é **tudo ou nada**: se um dos assentos não estiver disponível, nada é reservado.
+  - O limite é `Show.maxTicketsPerReservation` ingressos por reserva (padrão 6).
+- **Reserva ≠ ingresso**: a `Reservation` segura os assentos até `expiresAt`. O `Ticket` só é emitido depois do `PaymentPaid`.
+- **Titular por ingresso**: cada ingresso tem nome, documento e data de nascimento do titular. O nome do comprador aparece embaixo.
+- **Categoria**: um catálogo gerenciado pelo **root**, com seed inicial (Sertanejo, Gospel, Funk, Clássico, MPB). Também define a classificação etária (`minAge`).
+- **Tipo de ingresso** (`TicketType`): um nível de acesso criado pelo **organizador**, por show (Pista, Camarote, Backstage...). Tem preço, setor, cota opcional e benefícios.
+- **Meia-entrada**: uma modalidade legal (`PriceModality`: `INTEIRA` | `MEIA`). Vale 50% do preço do tipo e o organizador não pode configurá-la.
+- **Coupon**: fica para a próxima leva. Por enquanto, a `Reservation` já tem `couponId` e `discountInCents`.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Entities
 
-## Project setup
+Convenções:
+- ids `uuid`, datas `timestamptz` e dinheiro em **centavos (int)**;
+- ids de usuário vêm do IAM e ficam **sem FK**, porque o dono desse dado é o IAM.
 
-```bash
-$ yarn install
+```mermaid
+erDiagram
+  ShowCategory ||--o{ Show : classifica
+  Show ||--o{ Sector : tem
+  Sector ||--o{ Seat : tem
+  Show ||--o{ TicketType : oferece
+  Sector ||--o{ TicketType : "dá acesso a"
+  Show ||--o{ Benefit : tem
+  TicketType }o--o{ Benefit : inclui
+  Show ||--o{ Reservation : recebe
+  Reservation ||--|{ ReservationItem : contém
+  Seat ||--o{ ReservationItem : ocupa
+  TicketType ||--o{ ReservationItem : precifica
+  ReservationItem ||--o| Ticket : emite
 ```
 
-## Compile and run the project
+| Entity | Campos principais |
+|---|---|
+| `ShowCategory` | `name` (único), `minAge?`, `createdBy?` (null = seed) |
+| `Show` | `name`, `description?`, `venue`, `startAt`, `endAt`, `status`, `maxTicketsPerReservation`, `categoryId`, `producerId` |
+| `Sector` | `showId`, `name` (único por show) |
+| `Seat` | `sectorId`, `row`, `number` (únicos por setor), `status` |
+| `TicketType` | `showId`, `sectorId`, `name` (único por show), `priceInCents`, `quantity?`, `reservedCount`, `benefits` |
+| `Benefit` | `showId`, `name` (único por show), `description?` |
+| `Reservation` | `showId`, `buyerId`, `buyerName`, `status`, `expiresAt`, `discountInCents`, `couponId?`, `totalInCents` |
+| `ReservationItem` | `reservationId`, `seatId`, `ticketTypeId`, `priceModality`, `priceInCents`, `holderName`, `holderDocument`, `holderBirthDate` |
+| `Ticket` | `reservationItemId` (1:1), `code` (único, vai no QR), `status`, `usedAt?` |
 
-```bash
-# development
-$ yarn run start
+Alguns campos não existem de propósito:
+- **Não existe `Show.capacity`**: a capacidade é derivada da contagem de `Seat`. Guardar os dois deixaria os valores divergirem.
+- **Existe `TicketType.reservedCount`**, mesmo sendo um dado derivado. Ele permite o hold atômico com `UPDATE` condicional. Um `COUNT(*)` seguido de `INSERT` sofreria race condition.
 
-# watch mode
-$ yarn run start:dev
+## Invariantes
 
-# production mode
-$ yarn run start:prod
+Garantidas no banco:
+- `endAt > startAt`
+- assento único por setor
+- nome de tipo, setor e benefício único por show
+- `reservedCount <= quantity`
+- valores `>= 0`
+
+Garantidas no domínio:
+- Só shows `PUBLISHED` e com `startAt` no futuro aceitam reserva.
+- Uma reserva tem de 1 a `maxTicketsPerReservation` itens, e tudo nela pertence ao mesmo show.
+- O assento do item precisa estar no setor do `TicketType` do item.
+- A idade do titular na data `startAt` precisa ser `>= category.minAge`.
+- O preço do item é calculado por `calculateItemPrice` (a meia arredonda para baixo).
+- `totalInCents = Σ itens − discountInCents`.
+
+### Hold atômico (tudo ou nada, em uma transação)
+
+```sql
+UPDATE seats SET status = 'HELD'
+ WHERE id IN (...) AND status = 'AVAILABLE';          -- precisa afetar N linhas
+
+UPDATE ticket_types SET reserved_count = reserved_count + :n
+ WHERE id = :id AND (quantity IS NULL OR reserved_count + :n <= quantity);  -- precisa afetar 1 linha
 ```
 
-## Run tests
+Se qualquer um dos dois afetar menos linhas que o esperado, faz rollback.
 
-```bash
-# unit tests
-$ yarn run test
+## Ciclo de vida da reserva
 
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+```mermaid
+stateDiagram-v2
+  [*] --> PENDING: assentos em HOLD
+  PENDING --> CONFIRMED: PaymentPaid antes de expiresAt\nseats → SOLD, tickets emitidos
+  PENDING --> EXPIRED: expiresAt atingido\nseats → AVAILABLE, reservedCount--
+  PENDING --> CANCELLED: PaymentFailed\nseats → AVAILABLE, reservedCount--
+  EXPIRED --> EXPIRED: PaymentPaid tardio\nnão confirma, vira estorno
 ```
 
-## Deployment
+## Migrations
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Ficam em `src/domain/migrations/v1/`.
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+yarn migration:generate NomeDaMigration   # gera a partir do diff entities × banco
+yarn migration:run
+yarn migration:revert
 ```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

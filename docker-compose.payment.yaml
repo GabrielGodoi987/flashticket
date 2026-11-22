@@ -26,7 +26,7 @@ services:
       POSTGRES_PASSWORD: payment
       POSTGRES_DB: payment
     ports:
-      - "5433:5432"
+      - "5435:5432" # 5433 do host já está em uso por um PostgreSQL local
     volumes:
       - payment_db_data:/var/lib/postgresql/data
     networks: [payment-net]

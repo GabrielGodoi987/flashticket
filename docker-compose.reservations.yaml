@@ -1,69 +1,71 @@
 services:
-  reservas:
+  reservations:
     build:
-      context: ./reservas
+      context: ./reservations
       dockerfile: Dockerfile
-    networks: [reservas-net, bus]
+    ports:
+      - "3002:3000"
+    networks: [reservations-net, bus]
     environment:
-      DB_HOST: reservas_db
+      DB_HOST: reservations_db
       DB_PORT: 5432
-      DB_USER: reservas
-      DB_PASSWORD: reservas
-      DB_NAME: reservas
+      DB_USER: reservations
+      DB_PASSWORD: reservations
+      DB_NAME: reservations
     depends_on:
-      reservas_db:
+      reservations_db:
         condition: service_healthy
-      reservas_redis:
+      reservations_redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
 
-  reservas_db:
+  reservations_db:
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: reservas
-      POSTGRES_PASSWORD: reservas
-      POSTGRES_DB: reservas
+      POSTGRES_USER: reservations
+      POSTGRES_PASSWORD: reservations
+      POSTGRES_DB: reservations
     ports:
       - "5432:5432"
     volumes:
-      - reservas_db_data:/var/lib/postgresql/data
-    networks: [reservas-net]
+      - reservations_db_data:/var/lib/postgresql/data
+    networks: [reservations-net]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U reservas -d reservas"]
+      test: ["CMD-SHELL", "pg_isready -U reservations -d reservations"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  reservas_redis:
+  reservations_redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
     volumes:
-      - reservas_redis_data:/data
-    networks: [reservas-net]
+      - reservations_redis_data:/data
+    networks: [reservations-net]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  reservas_adminer:
+  reservations_adminer:
     image: adminer:4
     ports:
       - "8080:8080"
     environment:
-      ADMINER_DEFAULT_SERVER: reservas_db
-    networks: [reservas-net]
+      ADMINER_DEFAULT_SERVER: reservations_db
+    networks: [reservations-net]
     depends_on:
-      - reservas_db
+      - reservations_db
 
 volumes:
-  reservas_db_data:
-  reservas_redis_data:
+  reservations_db_data:
+  reservations_redis_data:
 
 networks:
-  reservas-net:
+  reservations-net:
     driver: bridge
   bus:
     driver: bridge

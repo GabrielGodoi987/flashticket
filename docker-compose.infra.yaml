@@ -5,7 +5,7 @@ services:
       RABBITMQ_DEFAULT_USER: bilheteria
       RABBITMQ_DEFAULT_PASS: bilheteria
     ports:
-      - "5672:5672" # AMQP
+      - "5673:5672" # AMQP (5672 do host já está em uso por um RabbitMQ local)
       - "15672:15672" # painel de gerenciamento
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq

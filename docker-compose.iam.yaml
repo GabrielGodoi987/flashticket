@@ -27,7 +27,7 @@ services:
       POSTGRES_PASSWORD: iam
       POSTGRES_DB: iam
     ports:
-      - "5434:5432"
+      - "5436:5432" # 5434 do host já está em uso por um PostgreSQL local
     volumes:
       - iam_db_data:/var/lib/postgresql/data
     networks: [iam-net]
